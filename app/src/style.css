@@ -1,9 +1,11 @@
 /* ------------------------------------------------------------------ tokens */
 :root {
-  --bg: #05060f;
-  --cyan: #00f0ff;
-  --cyan-dim: #0a7f8f;
-  --yellow: #fcee0a;
+  /* Cyberpunk 2077 UI colors: MainColors.Red / Blue / Yellow */
+  --bg: #041129;
+  --cyan: #5ef6ff;
+  --cyan-dim: #2f8f99;
+  --accent: #ff6159;
+  --yellow: #ffd741;
   --magenta: #ff003c;
   --ink: #8ceaf5;
   --panel: rgba(5, 8, 20, 0.82);
@@ -44,13 +46,10 @@ html, body {
   inset: 0;
   pointer-events: none;
   z-index: 5;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 240, 255, 0.045) 0px,
-    rgba(0, 240, 255, 0.045) 1px,
-    transparent 1px,
-    transparent 3px
-  );
+  /* The game map's faint square grid, not CRT scanlines. */
+  background:
+    linear-gradient(rgba(94, 246, 255, 0.035) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(90deg, rgba(94, 246, 255, 0.035) 1px, transparent 1px) 0 0 / 64px 64px;
   mix-blend-mode: screen;
 }
 
@@ -76,18 +75,18 @@ html, body {
 .panel {
   position: relative;
   background: var(--panel);
-  border: 1px solid rgba(0, 240, 255, 0.35);
+  border: 1px solid rgba(94, 246, 255, 0.35);
   clip-path: polygon(
     10px 0, 100% 0, 100% calc(100% - 10px),
     calc(100% - 10px) 100%, 0 100%, 0 10px
   );
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 0 18px rgba(0, 240, 255, 0.12), inset 0 0 24px rgba(0, 240, 255, 0.05);
+  box-shadow: 0 0 18px rgba(94, 246, 255, 0.12), inset 0 0 24px rgba(94, 246, 255, 0.05);
   padding: 8px 12px;
 }
 
-.panel--warn { border-color: rgba(252, 238, 10, 0.5); box-shadow: 0 0 18px rgba(252, 238, 10, 0.15); }
+.panel--warn { border-color: rgba(255, 215, 65, 0.5); box-shadow: 0 0 18px rgba(255, 215, 65, 0.15); }
 .panel--bad  { border-color: rgba(255, 0, 60, 0.55);  box-shadow: 0 0 18px rgba(255, 0, 60, 0.18); }
 
 .label {
@@ -102,7 +101,7 @@ html, body {
   font-family: "Share Tech Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   color: var(--cyan);
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.55);
+  text-shadow: 0 0 10px rgba(94, 246, 255, 0.55);
 }
 
 /* --------------------------------------------------------- speedometer */
@@ -125,11 +124,11 @@ html, body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--bg);
-  background: var(--yellow);
+  background: var(--accent);
   border: 0;
   padding: 10px 16px;
   clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow: 0 0 20px rgba(252, 238, 10, 0.35);
+  box-shadow: 0 0 20px rgba(255, 97, 89, 0.35);
   cursor: pointer;
   transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
@@ -138,7 +137,7 @@ html, body {
   color: var(--cyan);
   /* Dark, not transparent: with neon off the map underneath is light. */
   background: rgba(5, 6, 15, 0.8);
-  border: 1px solid rgba(0, 240, 255, 0.45);
+  border: 1px solid rgba(94, 246, 255, 0.45);
   box-shadow: none;
 }
 
@@ -146,7 +145,7 @@ html, body {
 
 /* ------------------------------------------------------- diagnostics */
 #diag { max-height: 52vh; overflow-y: auto; font-size: 12px; }
-#diag h2 { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--yellow); margin: 0 0 8px; }
+#diag h2 { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
 #diag dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 0; }
 #diag dt { color: var(--cyan-dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
 #diag dd { margin: 0; font-family: "Share Tech Mono", monospace; font-size: 11px; text-align: right; }
@@ -247,10 +246,10 @@ html, body {
   gap: 10px;
   /* Finger-height, not mouse-height. */
   padding: 13px 12px;
-  border-bottom: 1px solid rgba(0, 240, 255, 0.12);
+  border-bottom: 1px solid rgba(94, 246, 255, 0.12);
   cursor: pointer;
 }
-.search__item:active { background: rgba(0, 240, 255, 0.08); }
+.search__item:active { background: rgba(94, 246, 255, 0.08); }
 
 .search__label { flex: 1; font-size: 15px; color: var(--ink); }
 .search__dist { flex: none; font-size: 12px; color: var(--cyan-dim); white-space: nowrap; }
@@ -274,7 +273,7 @@ html, body {
   stroke-linejoin: round;
   fill: none;
   /* text-shadow doesn't affect SVG; the glow is done with drop-shadow. */
-  filter: drop-shadow(0 0 8px rgba(252, 238, 10, 0.45));
+  filter: drop-shadow(0 0 8px rgba(255, 215, 65, 0.45));
 }
 .mv__arrow .fill { fill: currentColor; stroke: none; }
 .mv__arrow .hole { fill: var(--bg); stroke: none; }
@@ -289,7 +288,7 @@ html, body {
   /* "200 m" must not wrap onto two lines if the card narrows. */
   white-space: nowrap;
   color: var(--yellow);
-  text-shadow: 0 0 12px rgba(252, 238, 10, 0.5);
+  text-shadow: 0 0 12px rgba(255, 215, 65, 0.5);
 }
 
 .mv__street {
@@ -304,7 +303,7 @@ html, body {
 .mv__trip {
   font-size: 13px;
   color: var(--cyan-dim);
-  border-top: 1px solid rgba(0, 240, 255, 0.15);
+  border-top: 1px solid rgba(94, 246, 255, 0.15);
   padding-top: 6px;
 }
 

@@ -1,7 +1,9 @@
 # Cyberpunk Maps
 
 > **Bryan's fork** of [ggigelmo/games-map](https://github.com/ggigelmo/games-map) (MIT).
-> Changes: a **Neon on/off** toggle (cyberpunk ↔ normal street map), keyless
+> Changes: restyled to match the **Cyberpunk 2077 in-game map** (measured
+> from real screenshots), a **Night City on/off** toggle (↔ normal street
+> map), **avoid highways / tolls**, keyless
 > Photon search + FOSSGIS Valhalla routing instead of Stadia, US units
 > (mi / ft / mph), and GitHub Pages hosting. See `STATUS.md`.
 

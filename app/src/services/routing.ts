@@ -121,14 +121,32 @@ function boundsOf(coords: [number, number][]): Route['bounds'] {
 
 const MI_TO_KM = 1.609344;
 
+export interface RouteOptions {
+  avoidHighways?: boolean;
+  avoidTolls?: boolean;
+}
+
 /** Computes a driving route between two points. */
-export async function route(from: Point, to: Point, signal?: AbortSignal): Promise<Route> {
+export async function route(
+  from: Point,
+  to: Point,
+  signal?: AbortSignal,
+  opts: RouteOptions = {},
+): Promise<Route> {
   const request = {
     locations: [
       { lat: from.lat, lon: from.lng },
       { lat: to.lat, lon: to.lng },
     ],
     costing: 'auto',
+    // Valhalla preferences, 0 = avoid as much as possible (not a hard ban:
+    // if the only way there is a highway, it still uses one).
+    costing_options: {
+      auto: {
+        ...(opts.avoidHighways && { use_highways: 0 }),
+        ...(opts.avoidTolls && { use_tolls: 0 }),
+      },
+    },
     // Miles so the spoken directions say "in a quarter mile", not "in 400
     // meters". Every length in the response is then in miles: converted
     // back to km below, because the rest of the app works in km/meters.

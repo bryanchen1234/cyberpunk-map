@@ -36,6 +36,14 @@ describe('getJson', () => {
     });
   });
 
+  it("shows the server's own error message when it sends one", async () => {
+    mockFetchOnce(400, { error_code: 154, error: 'Path distance exceeds the max distance limit' });
+    await expect(getJson('https://x.test/', {})).rejects.toMatchObject({
+      status: 400,
+      message: 'Path distance exceeds the max distance limit',
+    });
+  });
+
   it('falls back to a generic status message for anything else', async () => {
     mockFetchOnce(500);
     await expect(getJson('https://x.test/', {})).rejects.toMatchObject({ message: 'Error 500' });

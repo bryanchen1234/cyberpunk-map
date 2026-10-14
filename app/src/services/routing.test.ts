@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { decodePolyline } from './routing';
+import { decodePolyline, route } from './routing';
 import { distanceMeters, formatDistance, formatDuration } from './geo-math';
 import { DESTINATION, MADRID_SHAPE, ORIGIN } from './routing.fixture';
 
@@ -62,5 +62,32 @@ describe('formatting for the UI', () => {
   it('switches to hours above 60 minutes', () => {
     expect(formatDuration(443)).toBe('7 min');
     expect(formatDuration(4320)).toBe('1 h 12 min');
+  });
+});
+
+describe('route() request', () => {
+  const okResponse = {
+    trip: { summary: { length: 1, time: 60 }, legs: [{ shape: '', maneuvers: [] }] },
+  };
+  const sentRequest = async (opts: Parameters<typeof route>[3]) => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => okResponse });
+    vi.stubGlobal('fetch', fetchMock);
+    const r = await route({ lng: 0, lat: 0 }, { lng: 1, lat: 1 }, undefined, opts);
+    vi.unstubAllGlobals();
+    const url = new URL(fetchMock.mock.calls[0]![0] as URL);
+    return { body: JSON.parse(url.searchParams.get('json')!), r };
+  };
+
+  it('asks Valhalla to avoid highways and tolls only when chosen', async () => {
+    expect((await sentRequest({})).body.costing_options.auto).toEqual({});
+    expect(
+      (await sentRequest({ avoidHighways: true, avoidTolls: true })).body.costing_options.auto,
+    ).toEqual({ use_highways: 0, use_tolls: 0 });
+  });
+
+  it('requests miles (for the voice) but returns km', async () => {
+    const { body, r } = await sentRequest({});
+    expect(body.directions_options.units).toBe('miles');
+    expect(r.distanceKm).toBeCloseTo(1.609, 3);
   });
 });

@@ -48,8 +48,16 @@ export async function getJson<T>(
     const res = await fetch(url, { signal: merged });
     if (!res.ok) {
       // A 429 means the public server is rate-limiting us for a while:
-      // expected on a free fair-use server, not a bug to chase.
-      const hint = res.status === 429 ? QUOTA_MESSAGE : `Error ${res.status}`;
+      // expected on a free fair-use server, not a bug to chase. Otherwise
+      // prefer the server's own reason (Valhalla sends e.g. "Path distance
+      // exceeds the max distance limit"), not a bare status code.
+      const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+      const hint =
+        res.status === 429
+          ? QUOTA_MESSAGE
+          : typeof body?.error === 'string'
+            ? body.error
+            : `Error ${res.status}`;
       throw new ApiError(hint, res.status);
     }
     return (await res.json()) as T;

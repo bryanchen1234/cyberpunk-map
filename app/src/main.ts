@@ -9,7 +9,8 @@ import { mountDiagnostics } from './diag/probe';
 import { Compass } from './services/compass';
 import { GeoWatcher, type Fix } from './services/geolocation';
 import { KeepAwake } from './services/keep-awake';
-import { route as calculateRoute } from './services/routing';
+import { route as calculateRoute, type RouteOptions } from './services/routing';
+import type { Place } from './services/geocoding';
 import { ApiError } from './services/http';
 import { ManeuverCard } from './nav/maneuver-card';
 import { NavSession, type Destination, type NavPhase } from './nav/session';
@@ -98,7 +99,17 @@ let inFlight: AbortController | null = null;
 /** Reroute request in flight. Declared here because onClear uses it. */
 let reroute: AbortController | null = null;
 
+/** Avoid highways / tolls, remembered per browser (best-effort storage). */
+const routeOpts: RouteOptions = {};
+try {
+  Object.assign(routeOpts, JSON.parse(localStorage.getItem('routeOpts') ?? '{}'));
+} catch {
+  /* defaults */
+}
+let lastPlace: Place | null = null;
+
 search.onPick = async (place) => {
+  lastPlace = place;
   const from = geo.last;
   if (!from) return;
 
@@ -109,7 +120,7 @@ search.onPick = async (place) => {
   routeCard.showPending(place.label);
 
   try {
-    const route = await calculateRoute(from, place, ctrl.signal);
+    const route = await calculateRoute(from, place, ctrl.signal, routeOpts);
     if (ctrl.signal.aborted) return;
     routeLayer.show(route);
     // Preview: frame the whole trip to decide. The driving camera is a
@@ -159,7 +170,7 @@ nav.onNeedsReroute = async (from: Fix, to: Destination) => {
   reroute = ctrl;
 
   try {
-    const newRoute = await calculateRoute(from, to, ctrl.signal);
+    const newRoute = await calculateRoute(from, to, ctrl.signal, routeOpts);
     if (ctrl.signal.aborted) return;
     routeLayer.show(newRoute);
     nav.replaceRoute(newRoute);
@@ -233,6 +244,26 @@ paintFollowState(view.following);
 
 const pitchBtn = button('2D / 3D', true, () => view.togglePitch());
 
+// Route preferences. Changing one while previewing a route recomputes it;
+// during navigation they apply from the next reroute.
+const optionBtn = (label: string, key: keyof RouteOptions) => {
+  const b = button(label, true, () => {
+    routeOpts[key] = !routeOpts[key];
+    try {
+      localStorage.setItem('routeOpts', JSON.stringify(routeOpts));
+    } catch {
+      /* not remembered, still applies */
+    }
+    paint();
+    if (nav.phase === 'preview' && lastPlace) void search.onPick?.(lastPlace);
+  });
+  const paint = () => b.classList.toggle('btn--ghost', !routeOpts[key]);
+  paint();
+  return b;
+};
+const hwyBtn = optionBtn('Avoid hwy', 'avoidHighways');
+const tollBtn = optionBtn('Avoid tolls', 'avoidTolls');
+
 // Neon on/off: cyberpunk style vs OpenFreeMap's ordinary street map (same
 // free tiles, no key). Remembered per browser; storage can throw in private
 // mode, so it's best-effort.
@@ -273,24 +304,32 @@ const neonBtn = button('', false, () => {
 });
 function paintNeon() {
   scanlines.hidden = !neon;
-  neonBtn.textContent = neon ? 'Neon: on' : 'Neon: off';
+  neonBtn.textContent = neon ? 'Night City: on' : 'Night City: off';
   neonBtn.classList.toggle('btn--ghost', !neon);
+}
+/** Which style is actually on the map: re-applying the same one would
+ * still throw away every loaded tile (setStyle with diff=false). */
+let applied: 'neon' | 'plain' = 'neon';
+function show(which: 'neon' | 'plain', s: StyleSpecification) {
+  if (applied === which) return;
+  applied = which;
+  view.setStyle(s, false);
 }
 async function applyNeon() {
   paintNeon();
   if (neon) {
-    view.setStyle(style, false);
+    show('neon', style);
     return;
   }
   try {
     const plain = await loadPlain();
     // A second tap while fetching may have turned neon back on.
-    if (!neon) view.setStyle(plain, false);
+    if (!neon) show('plain', plain);
   } catch {
     // Offline: stay on (or go back to) the bundled neon style.
     neon = true;
     paintNeon();
-    view.setStyle(style, false);
+    show('neon', style);
   }
 }
 // The map was built with the neon style; only swap if the saved choice is off.
@@ -321,6 +360,8 @@ function paintPhase(phase: NavPhase) {
   searchBtn.hidden = navigating;
   stopBtn.hidden = !navigating;
   pitchBtn.hidden = navigating; // while navigating the session drives the camera
+  hwyBtn.hidden = navigating;
+  tollBtn.hidden = navigating;
 
   if (phase === 'idle') {
     routeLayer.clear();

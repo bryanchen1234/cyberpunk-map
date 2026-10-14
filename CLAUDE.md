@@ -123,8 +123,16 @@ Routes are requested in **miles** (for the spoken text) and converted back
 to km in `routing.ts`; the rest of the app works in km/meters and only
 `formatDistance` shows US units.
 
-**Neon toggle** (`main.ts`) swaps between `style/cyberpunk.json` and
-OpenFreeMap's `liberty` style with `setStyle(..., diff=false)`.
+**Night City toggle** (`main.ts`, variable `neon`, storage key `neon`)
+swaps between `style/cyberpunk.json` and OpenFreeMap's `liberty` style
+(fetched by hand, falls back to the bundled style offline).
+
+**The style imitates the CP2077 2.x in-game map**; palette values in
+`style/build.mjs` are pixel medians measured from real screenshots. Roads
+are translucent with butt caps on purpose (see comments there).
+
+**Route options** (`RouteOptions` in `routing.ts`): avoid highways/tolls
+map to Valhalla `use_highways` / `use_tolls` = 0, stored under `routeOpts`.
 
 **Hosting:** GitHub Pages via `.github/workflows/pages.yml`, under
 `/<repo>/`, so Vite's `base` comes from the `BASE` env var and the sprite

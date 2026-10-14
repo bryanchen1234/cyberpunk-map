@@ -32,7 +32,7 @@ const NAV_OFFSET_RATIO = 0.22;
 /** Minimum degrees before bothering to turn the camera with the compass. */
 const CAMERA_TURN_DEG = 4;
 
-/** Player chevron: cyan with a glow, pointing at the heading. */
+/** Player chevron: the game's green open "A" arrow, pointing at the heading. */
 function playerMarkerEl(): HTMLElement {
   const el = document.createElement('div');
   el.style.willChange = 'transform';
@@ -40,15 +40,14 @@ function playerMarkerEl(): HTMLElement {
     <svg width="46" height="46" viewBox="0 0 46 46" style="overflow:visible">
       <defs>
         <filter id="pglow" x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="3.2" result="b" />
+          <feGaussianBlur stdDeviation="2.4" result="b" />
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
-      <circle cx="23" cy="23" r="17" fill="#00f0ff" opacity="0.07" />
       <g filter="url(#pglow)">
-        <path d="M23 6 L34 34 L23 27 L12 34 Z"
-              fill="#00f0ff" stroke="#d6feff" stroke-width="1.3"
-              stroke-linejoin="round" />
+        <path d="M23 7 L35 36 L23 28 L11 36 Z"
+              fill="#00a22d" fill-opacity="0.35" stroke="#2ee87a" stroke-width="2.6"
+              stroke-linejoin="miter" />
       </g>
     </svg>`;
   return el;

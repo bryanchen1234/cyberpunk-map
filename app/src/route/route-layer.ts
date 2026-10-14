@@ -5,12 +5,12 @@ import type { Route } from '../services/routing';
 const SOURCE = 'route';
 
 /**
- * Magenta: the only live color the basemap doesn't use. Yellow is taken by
- * highways and cyan by the rest of the roads, so a route in either would get
- * lost on top of them.
+ * The game's GPS route: a solid yellow line with a soft warm edge. Core
+ * measured from a real 2.x map screenshot (#fffa53); the halo is the game's
+ * UI yellow (#ffd741). Nothing else on the basemap is yellow, so it pops.
  */
-const MAGENTA = '#ff003c';
-const CORE = '#ff8fa6';
+const GLOW = '#ffd741';
+const CORE = '#fffa53';
 
 /** Below the labels, so the line doesn't cover them. */
 const BEFORE = 'road-label';
@@ -104,10 +104,10 @@ export class RouteLayer {
         ...base,
         id: 'route-glow',
         paint: {
-          'line-color': MAGENTA,
-          'line-width': width(3.4) as never,
-          'line-blur': width(3) as never,
-          'line-opacity': 0.5,
+          'line-color': GLOW,
+          'line-width': width(2.6) as never,
+          'line-blur': width(2.2) as never,
+          'line-opacity': 0.35,
         },
       },
       before,
@@ -118,7 +118,7 @@ export class RouteLayer {
         ...base,
         id: 'route-mid',
         paint: {
-          'line-color': MAGENTA,
+          'line-color': GLOW,
           'line-width': width(1.7) as never,
           'line-blur': width(0.5) as never,
           'line-opacity': 0.75,
