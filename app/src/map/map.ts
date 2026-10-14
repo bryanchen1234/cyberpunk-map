@@ -92,7 +92,7 @@ export class MapView {
     this.map = new maplibregl.Map({
       container,
       style,
-      center: [-3.7038, 40.4168], // Madrid, until the first fix arrives
+      center: [-117.2340, 32.8801], // San Diego, until the first fix arrives
       zoom: 15,
       pitch: 55,
       bearing: 0,
@@ -148,9 +148,12 @@ export class MapView {
     });
   }
 
-  /** Applies a new style while keeping the camera. Used by HMR. */
-  setStyle(style: StyleSpecification) {
-    this.map.setStyle(style, { diff: true });
+  /**
+   * Applies a new style while keeping the camera. HMR diffs (same style,
+   * tweaked); the neon toggle swaps between unrelated styles, so no diff.
+   */
+  setStyle(style: StyleSpecification | string, diff = true) {
+    this.map.setStyle(style, { diff });
   }
 
   update(fix: Fix) {

@@ -66,9 +66,20 @@ export class RouteLayer {
   }
 
   private render() {
-    // During a style change the map refuses to have layers added to it.
-    if (!this.map.isStyleLoaded()) return;
+    // Not gated on isStyleLoaded(): that stays false while ANY tile or the
+    // sprite is still loading, which is most of the time while driving, and
+    // a reroute arriving then would be silently dropped (old line on screen,
+    // voice on the new route). Adding layers is allowed as soon as the style
+    // JSON is parsed; before that addSource throws, and the 'style.load'
+    // listener repaints once it's ready.
+    try {
+      this.draw();
+    } catch {
+      /* style not parsed yet: 'style.load' will call render() again */
+    }
+  }
 
+  private draw() {
     this.teardown();
     if (!this.current) return;
 

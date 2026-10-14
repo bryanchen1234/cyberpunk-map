@@ -53,9 +53,10 @@ describe('decodePolyline', () => {
 
 describe('formatting for the UI', () => {
   it('rounds meters and switches to km when appropriate', () => {
-    expect(formatDistance(834)).toBe('830 m');
-    expect(formatDistance(5189)).toBe('5.2 km');
-    expect(formatDistance(42_300)).toBe('42 km');
+    expect(formatDistance(100)).toBe('350 ft');
+    expect(formatDistance(834)).toBe('0.5 mi');
+    expect(formatDistance(5189)).toBe('3.2 mi');
+    expect(formatDistance(42_300)).toBe('26 mi');
   });
 
   it('switches to hours above 60 minutes', () => {

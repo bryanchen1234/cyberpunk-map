@@ -64,7 +64,7 @@ The navigation one **never zooms out**, by design.
 `setStyle` wipes out hand-added sources and layers. Don't add coordination
 for that in `main.ts`.
 
-**`main.ts` resolves the sprite URL against `location.origin`** before
+**`main.ts` resolves the sprite URL against the app's base URL** before
 handing the style to the map. MapLibre requires it to be absolute — unlike
 tile and glyph URLs — and the style keeps a relative one to stay portable
 between localhost and production.
@@ -116,11 +116,19 @@ symptoms in `docs/status.md`):
 
 ## Services and keys
 
-**There is no API key in the code, and there shouldn't be one** (see
-`services/stadia.ts` and `style/build.mjs` for how each service is
-authenticated). If `401 No valid authentication provided` shows up in
-production, it means the domain needs to be registered in Stadia's panel,
-not that a key is missing.
+**There is no API key in the code, and there shouldn't be one.** Search is
+Photon (`services/geocoding.ts`), routes are the FOSSGIS Valhalla demo
+(`services/routing.ts`), tiles are OpenFreeMap; all keyless, all fair-use.
+Routes are requested in **miles** (for the spoken text) and converted back
+to km in `routing.ts`; the rest of the app works in km/meters and only
+`formatDistance` shows US units.
+
+**Neon toggle** (`main.ts`) swaps between `style/cyberpunk.json` and
+OpenFreeMap's `liberty` style with `setStyle(..., diff=false)`.
+
+**Hosting:** GitHub Pages via `.github/workflows/pages.yml`, under
+`/<repo>/`, so Vite's `base` comes from the `BASE` env var and the sprite
+URL is resolved against `import.meta.env.BASE_URL`.
 
 ## Conventions
 
@@ -133,5 +141,4 @@ not that a key is missing.
 - Comments explain **why**, not what. The ones that say "without this, X
   happens" document a real failure that was actually observed: don't delete
   them while refactoring.
-- Commit authorship: `garciaig <ggigelmo@gmail.com>` (matches the repo's
-  GitHub account).
+- Commit authorship: this fork is Bryan's; use the local git identity.

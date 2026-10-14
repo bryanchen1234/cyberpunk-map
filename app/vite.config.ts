@@ -32,6 +32,8 @@ function styleBuilder(): Plugin {
 }
 
 export default defineConfig({
+  // GitHub Pages serves the app under /<repo>/; the deploy workflow sets BASE.
+  base: process.env.BASE || '/',
   plugins: [styleBuilder()],
   server: {
     // The canonical style lives in ../style, outside Vite's root.

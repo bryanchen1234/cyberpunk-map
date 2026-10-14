@@ -27,11 +27,11 @@ export function distanceMeters(a: Point, b: Point): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** "850 m" / "12.4 km" */
+/** US units: "500 ft" under ~0.1 mi, then "3.2 mi" / "42 mi" */
 export function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
-  const km = meters / 1000;
-  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
+  const mi = meters / 1609.344;
+  if (mi < 0.1) return `${Math.round((meters * 3.28084) / 50) * 50} ft`;
+  return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi`;
 }
 
 /** "7 min" / "1 h 12 min" */

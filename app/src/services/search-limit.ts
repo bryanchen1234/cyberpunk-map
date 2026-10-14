@@ -1,6 +1,6 @@
 /**
  * Self-imposed cap on destination-search calls, tracked per browser via
- * localStorage. This does NOT protect Stadia's shared, keyless quota from
+ * localStorage. This does NOT protect Photon's shared, keyless server from
  * other visitors -- it only bounds how much of it this one browser can
  * spend by itself. It's a courtesy limit, not an anti-abuse or security
  * mechanism: the source is public, and anyone can bypass it by clearing
@@ -15,7 +15,8 @@ export interface SearchLimitRecord {
   count: number;
 }
 
-export const SEARCH_LIMIT = 500;
+// Each debounced keystroke is one request, so ~5 per destination search.
+export const SEARCH_LIMIT = 3000;
 
 export function currentMonth(now: Date): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -25,7 +26,7 @@ export function currentMonth(now: Date): string {
  * Decides whether a search is allowed and what the record becomes.
  *
  * A record from a previous month resets the count to 0 first: the cap is
- * "per calendar month", matching Stadia's own monthly reset. Once at the
+ * "per calendar month". Once at the
  * limit, the count stops climbing -- there's no need to keep counting past
  * it, and it keeps the stored value from growing without bound.
  */

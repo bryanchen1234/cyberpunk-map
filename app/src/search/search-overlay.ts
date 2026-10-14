@@ -1,7 +1,7 @@
 import { formatDistance, type Point } from '../services/geo-math';
 import { autocomplete, MIN_QUERY_LENGTH, type Place } from '../services/geocoding';
 import { searchUsage, trySearch } from '../services/search-limit';
-import { QUOTA_MESSAGE, StadiaError } from '../services/stadia';
+import { QUOTA_MESSAGE, ApiError } from '../services/http';
 
 /** How long to wait after the last keystroke before asking the server. */
 const DEBOUNCE_MS = 300;
@@ -117,7 +117,7 @@ export class SearchOverlay {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       this.list.replaceChildren();
       this.status.textContent =
-        err instanceof StadiaError ? err.message.toUpperCase() : 'SEARCH ERROR';
+        err instanceof ApiError ? err.message.toUpperCase() : 'SEARCH ERROR';
     }
   }
 

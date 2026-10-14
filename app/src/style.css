@@ -136,7 +136,8 @@ html, body {
 .btn:active { transform: translateY(1px); }
 .btn--ghost {
   color: var(--cyan);
-  background: transparent;
+  /* Dark, not transparent: with neon off the map underneath is light. */
+  background: rgba(5, 6, 15, 0.8);
   border: 1px solid rgba(0, 240, 255, 0.45);
   box-shadow: none;
 }

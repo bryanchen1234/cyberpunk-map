@@ -1,5 +1,5 @@
 import { distanceMeters, type Point } from './geo-math';
-import { stadiaGet } from './stadia';
+import { getJson } from './http';
 
 /** A search result, already massaged for the UI. */
 export interface Place {
@@ -12,11 +12,31 @@ export interface Place {
   distanceM: number | null;
 }
 
-interface PeliasResponse {
+interface PhotonResponse {
   features: {
-    properties: { gid?: string; label?: string; name?: string };
+    properties: {
+      osm_type?: string;
+      osm_id?: number;
+      name?: string;
+      housenumber?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+    };
     geometry: { coordinates: [number, number] };
   }[];
+}
+
+/**
+ * Photon returns address parts, not a ready label (Pelias did), so it's
+ * assembled here: "Petco Park, 100 Park Boulevard, San Diego, California".
+ */
+export function photonLabel(p: PhotonResponse['features'][number]['properties']): string {
+  const street = [p.housenumber, p.street].filter(Boolean).join(' ');
+  const parts = [p.name, street, p.city, p.state].filter(Boolean);
+  // Dedup: a street result has name === street.
+  return [...new Set(parts)].join(', ') || 'No name';
 }
 
 /** Below this, results are just noise and waste requests. */
@@ -38,23 +58,20 @@ export async function autocomplete(
   near: Point | null,
   signal?: AbortSignal,
 ): Promise<Place[]> {
-  const params: Record<string, string | number> = {
-    text,
-    lang: 'en',
-    size: 8,
-  };
+  const params: Record<string, string | number> = { q: text, lang: 'en', limit: 8 };
   if (near) {
-    params['focus.point.lat'] = near.lat;
-    params['focus.point.lon'] = near.lng;
+    params.lat = near.lat;
+    params.lon = near.lng;
   }
 
-  const data = await stadiaGet<PeliasResponse>('/geocoding/v1/autocomplete', params, signal);
+  // Photon (komoot): OSM search built for search-as-you-type, no key.
+  const data = await getJson<PhotonResponse>('https://photon.komoot.io/api/', params, signal);
 
   return (data.features ?? []).map((f, i) => {
     const [lng, lat] = f.geometry.coordinates;
     return {
-      id: f.properties.gid ?? `${lng},${lat},${i}`,
-      label: f.properties.label ?? f.properties.name ?? 'No name',
+      id: f.properties.osm_id ? `${f.properties.osm_type}${f.properties.osm_id}` : `${lng},${lat},${i}`,
+      label: photonLabel(f.properties),
       lng,
       lat,
       distanceM: near ? distanceMeters(near, { lng, lat }) : null,

@@ -1,5 +1,5 @@
 import type { Point } from './geo-math';
-import { stadiaGet } from './stadia';
+import { getJson } from './http';
 
 /**
  * A route maneuver. Valhalla already drafts the text to be read aloud, in
@@ -119,6 +119,8 @@ function boundsOf(coords: [number, number][]): Route['bounds'] {
   ];
 }
 
+const MI_TO_KM = 1.609344;
+
 /** Computes a driving route between two points. */
 export async function route(from: Point, to: Point, signal?: AbortSignal): Promise<Route> {
   const request = {
@@ -127,11 +129,15 @@ export async function route(from: Point, to: Point, signal?: AbortSignal): Promi
       { lat: to.lat, lon: to.lng },
     ],
     costing: 'auto',
-    directions_options: { language: 'en-US', units: 'kilometers' },
+    // Miles so the spoken directions say "in a quarter mile", not "in 400
+    // meters". Every length in the response is then in miles: converted
+    // back to km below, because the rest of the app works in km/meters.
+    directions_options: { language: 'en-US', units: 'miles' },
   };
 
-  const data = await stadiaGet<ValhallaResponse>(
-    '/route/v1',
+  // FOSSGIS's public Valhalla demo: same API Stadia hosts, no key, fair use.
+  const data = await getJson<ValhallaResponse>(
+    'https://valhalla1.openstreetmap.de/route',
     { json: JSON.stringify(request) },
     signal,
   );
@@ -153,7 +159,7 @@ export async function route(from: Point, to: Point, signal?: AbortSignal): Promi
         verbalAlert: m.verbal_transition_alert_instruction,
         multiCue: m.verbal_multi_cue ?? false,
         beginIndex: offset + m.begin_shape_index,
-        lengthKm: m.length,
+        lengthKm: m.length * MI_TO_KM,
         timeS: m.time,
       });
     }
@@ -161,7 +167,7 @@ export async function route(from: Point, to: Point, signal?: AbortSignal): Promi
 
   return {
     coordinates,
-    distanceKm: data.trip.summary.length,
+    distanceKm: data.trip.summary.length * MI_TO_KM,
     durationS: data.trip.summary.time,
     maneuvers,
     bounds: boundsOf(coordinates),

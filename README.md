@@ -1,5 +1,10 @@
 # Cyberpunk Maps
 
+> **Bryan's fork** of [ggigelmo/games-map](https://github.com/ggigelmo/games-map) (MIT).
+> Changes: a **Neon on/off** toggle (cyberpunk ↔ normal street map), keyless
+> Photon search + FOSSGIS Valhalla routing instead of Stadia, US units
+> (mi / ft / mph), and GitHub Pages hosting. See `STATUS.md`.
+
 GPS navigator with a Cyberpunk aesthetic.
 
 It's a **PWA**: deployed as a website and added to the iPhone home screen,
@@ -55,7 +60,7 @@ Open <http://localhost:5173>. Add `?lab` for style-tuning desktop controls
 The repo is an **npm workspace**: it's installed and run from the root, not
 from `app/`. If 5173 is taken, `PORT=5174 npm run dev`.
 
-On `localhost` the Stadia API works **without a key** (with a stricter rate
+Search and routing use free public servers with **no key** (the original's note: on `localhost` the Stadia API works without a key, with a stricter rate
 limit), so there's nothing to configure for development.
 
 ## Testing
@@ -104,7 +109,7 @@ app/src/
     compass.ts          device compass
     heading.ts          who's in charge of heading: GPS while moving, compass while stopped
     keep-awake.ts       keeps the screen from turning off
-    stadia.ts           shared HTTP client
+    http.ts             shared HTTP client
     geocoding.ts        destination autocomplete
     routing.ts          Valhalla routes and polyline decoder
     geo-math.ts         haversine and distance/time formatting
@@ -189,8 +194,11 @@ Cyberpunk 2077's own assets, which are the property of CD Projekt Red.
 | What | Who | Key |
 |---|---|---|
 | Vector tiles | [OpenFreeMap](https://openfreemap.org) (OpenMapTiles schema) | Not needed |
-| Destination autocomplete | Stadia Maps (Pelias) | By domain |
-| Driving routes | Stadia Maps (Valhalla) | By domain |
+| Destination autocomplete | [Photon](https://photon.komoot.io) (komoot, OSM data) | Not needed (fair use) |
+| Driving routes | [FOSSGIS Valhalla](https://valhalla1.openstreetmap.de) public demo | Not needed (fair use) |
+
+*(Fork note: the Stadia notes below describe the original setup and no
+longer apply.)*
 
 **There is no API key in the code.** Stadia authenticates by domain: it
 validates the `Origin` and `Referer` headers that the browser sends on its

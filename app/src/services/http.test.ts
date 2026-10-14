@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { StadiaError, stadiaGet } from './stadia';
+import { ApiError, getJson } from './http';
 
 function mockFetchOnce(status: number, body: unknown = {}) {
   vi.stubGlobal(
@@ -13,14 +13,14 @@ function mockFetchOnce(status: number, body: unknown = {}) {
   );
 }
 
-describe('stadiaGet', () => {
+describe('getJson', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
   it('returns the parsed body on success', async () => {
     mockFetchOnce(200, { hello: 'world' });
-    const data = await stadiaGet<{ hello: string }>('/x', {});
+    const data = await getJson<{ hello: string }>('https://x.test/', {});
     expect(data).toEqual({ hello: 'world' });
   });
 
@@ -29,23 +29,16 @@ describe('stadiaGet', () => {
     // for the month: this is the demo's normal failure mode, not a bug, so
     // the message must say so instead of surfacing "Error 429".
     mockFetchOnce(429);
-    await expect(stadiaGet('/geocoding/v1/autocomplete', {})).rejects.toMatchObject({
-      name: 'StadiaError',
+    await expect(getJson('https://x.test/', {})).rejects.toMatchObject({
+      name: 'ApiError',
       status: 429,
       message: 'Demo search limit reached for now, try again later',
     });
   });
 
-  it('reports 401/403 as a domain-authorization hint', async () => {
-    mockFetchOnce(403);
-    await expect(stadiaGet('/x', {})).rejects.toMatchObject({
-      message: 'Domain not authorized with Stadia Maps',
-    });
-  });
-
   it('falls back to a generic status message for anything else', async () => {
     mockFetchOnce(500);
-    await expect(stadiaGet('/x', {})).rejects.toMatchObject({ message: 'Error 500' });
+    await expect(getJson('https://x.test/', {})).rejects.toMatchObject({ message: 'Error 500' });
   });
 
   it('lets an AbortError through as-is instead of wrapping it', async () => {
@@ -53,11 +46,11 @@ describe('stadiaGet', () => {
       'fetch',
       vi.fn().mockRejectedValue(new DOMException('aborted', 'AbortError')),
     );
-    await expect(stadiaGet('/x', {})).rejects.toBeInstanceOf(DOMException);
+    await expect(getJson('https://x.test/', {})).rejects.toBeInstanceOf(DOMException);
   });
 
   it('wraps other network failures as "no connection"', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
-    await expect(stadiaGet('/x', {})).rejects.toEqual(new StadiaError('No connection'));
+    await expect(getJson('https://x.test/', {})).rejects.toEqual(new ApiError('No connection'));
   });
 });

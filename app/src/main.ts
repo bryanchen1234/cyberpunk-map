@@ -10,7 +10,7 @@ import { Compass } from './services/compass';
 import { GeoWatcher, type Fix } from './services/geolocation';
 import { KeepAwake } from './services/keep-awake';
 import { route as calculateRoute } from './services/routing';
-import { StadiaError } from './services/stadia';
+import { ApiError } from './services/http';
 import { ManeuverCard } from './nav/maneuver-card';
 import { NavSession, type Destination, type NavPhase } from './nav/session';
 import { RouteLayer } from './route/route-layer';
@@ -22,12 +22,14 @@ import { VoiceGuide } from './services/voice';
  * MapLibre REQUIRES the sprite URL to be absolute, unlike tile and glyph
  * URLs, which accept relative ones ("Invalid sprite URL, must be absolute").
  * The style keeps a root-relative path to stay portable between localhost
- * and Cloudflare, so it's resolved here against the current origin before
- * handing it to the map.
+ * and production, so it's resolved here before handing it to the map.
  */
 function resolveSprite(s: StyleSpecification): StyleSpecification {
   if (typeof s.sprite !== 'string' || /^[a-z]+:/i.test(s.sprite)) return s;
-  return { ...s, sprite: new URL(s.sprite, location.origin).href };
+  // Against the app's base, not the origin: on GitHub Pages it lives under
+  // /<repo>/, so "/sprites/x" must become "/<repo>/sprites/x".
+  const base = new URL(import.meta.env.BASE_URL, location.origin);
+  return { ...s, sprite: new URL(s.sprite.replace(/^\//, ''), base).href };
 }
 
 const style = resolveSprite(styleJson as unknown as StyleSpecification);
@@ -119,7 +121,7 @@ search.onPick = async (place) => {
     if (err instanceof DOMException && err.name === 'AbortError') return;
     routeCard.showError(
       place.label,
-      err instanceof StadiaError ? err.message : 'Could not calculate the route',
+      err instanceof ApiError ? err.message : 'Could not calculate the route',
     );
   }
 };
@@ -230,6 +232,70 @@ view.onFollowingChange = paintFollowState;
 paintFollowState(view.following);
 
 const pitchBtn = button('2D / 3D', true, () => view.togglePitch());
+
+// Neon on/off: cyberpunk style vs OpenFreeMap's ordinary street map (same
+// free tiles, no key). Remembered per browser; storage can throw in private
+// mode, so it's best-effort.
+const PLAIN_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+const NEON_KEY = 'neon';
+let neon = true;
+try {
+  neon = localStorage.getItem(NEON_KEY) !== 'off';
+} catch {
+  /* default on */
+}
+
+/**
+ * The plain style is fetched here, not handed to setStyle as a URL: if
+ * MapLibre's own fetch fails (no signal) it never retries and the map stays
+ * blank for the session. Fetching it ourselves lets a failure fall back to
+ * the bundled neon style, and a later tap retries.
+ */
+let plainStyle: StyleSpecification | null = null;
+async function loadPlain(): Promise<StyleSpecification> {
+  if (!plainStyle) {
+    const res = await fetch(PLAIN_STYLE);
+    if (!res.ok) throw new Error(`plain style ${res.status}`);
+    plainStyle = (await res.json()) as StyleSpecification;
+  }
+  return plainStyle;
+}
+
+const scanlines = document.getElementById('scanlines')!;
+const neonBtn = button('', false, () => {
+  neon = !neon;
+  try {
+    localStorage.setItem(NEON_KEY, neon ? 'on' : 'off');
+  } catch {
+    /* not remembered, still toggles */
+  }
+  void applyNeon();
+});
+function paintNeon() {
+  scanlines.hidden = !neon;
+  neonBtn.textContent = neon ? 'Neon: on' : 'Neon: off';
+  neonBtn.classList.toggle('btn--ghost', !neon);
+}
+async function applyNeon() {
+  paintNeon();
+  if (neon) {
+    view.setStyle(style, false);
+    return;
+  }
+  try {
+    const plain = await loadPlain();
+    // A second tap while fetching may have turned neon back on.
+    if (!neon) view.setStyle(plain, false);
+  } catch {
+    // Offline: stay on (or go back to) the bundled neon style.
+    neon = true;
+    paintNeon();
+    view.setStyle(style, false);
+  }
+}
+// The map was built with the neon style; only swap if the saved choice is off.
+if (neon) paintNeon();
+else void applyNeon();
 
 diag.el.hidden = true;
 const diagBtn = button('Diag', true, () => {

@@ -11,7 +11,7 @@ export class Hud {
     this.el.innerHTML = `
       <div class="panel speed">
         <div class="num" data-speed>--</div>
-        <div class="unit">km/h</div>
+        <div class="unit">mph</div>
       </div>
       <div class="panel readout">
         <span class="label">Heading</span><span class="num" data-heading>--</span>
@@ -33,7 +33,7 @@ export class Hud {
     this.speedNum.textContent =
       fix.speed === null || Number.isNaN(fix.speed)
         ? '--'
-        : Math.max(0, Math.round(fix.speed * 3.6)).toString();
+        : Math.max(0, Math.round(fix.speed * 2.23694)).toString();
 
     this.rows.heading.textContent =
       fix.heading === null || Number.isNaN(fix.heading)
